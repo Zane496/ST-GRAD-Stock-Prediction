@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-np.random.seed(42)
+np.random.seed(43)
 
 WINDOW_SIZE = 30
 PRED_HORIZON = 1

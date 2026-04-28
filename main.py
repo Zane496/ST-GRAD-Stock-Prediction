@@ -2,9 +2,23 @@
 import argparse
 import os
 import logging
+import random
+import torch
+import numpy as np
 from train import train_model, test_model
 from utils.data_processor import process_and_save_data
 from utils.graph_builder import build_adjacency_matrix
+
+
+def set_seed(seed=43):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+set_seed(43)
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -44,35 +58,37 @@ def main():
     dataset_path = 'data/processed/stock_dataset.npz'
     adj_matrix_path = 'data/processed/normalized_adj_matrix.npy'
 
-    # --- Stage 1: Data Preprocessing ---
-    # Logic: Run if mode is 'data' OR (mode is 'all' AND file doesn't exist)
-    should_run_data = (args.mode == 'data') or (args.mode == 'all' and not os.path.exists(dataset_path))
-
-    if should_run_data:
-        logging.info(">>> Stage 1/3: Data Preprocessing started...")
-        try:
-            process_and_save_data(args.data_dir, 'data/processed/stock_order.npy', dataset_path)
-            logging.info(">>> Stage 1/3: Data Preprocessing completed successfully.\n")
-        except Exception as e:
-            logging.error(f"Data Preprocessing Failed: {e}")
-            return
-    elif args.mode == 'all':
-        logging.info(f">>> Stage 1/3: Skipping Preprocessing (Found existing: {dataset_path}).")
-
-    # --- Stage 2: Graph Construction ---
+    # --- Stage 1: Graph Construction ---
     # Logic: Run if mode is 'graph' OR (mode is 'all' AND file doesn't exist)
     should_run_graph = (args.mode == 'graph') or (args.mode == 'all' and not os.path.exists(adj_matrix_path))
 
     if should_run_graph:
-        logging.info(">>> Stage 2/3: Adjacency Matrix Construction started...")
+        logging.info(">>> Stage 1/3: Adjacency Matrix Construction started...")
         try:
-            build_adjacency_matrix(args.cluster_file, adj_matrix_path, 'data/processed/stock_order.npy')
-            logging.info(">>> Stage 2/3: Graph Construction completed successfully.\n")
+            build_adjacency_matrix(args.cluster_file, adj_matrix_path, 'data/raw/stock_order.npy')
+            logging.info(">>> Stage 1/3: Graph Construction completed successfully.\n")
         except Exception as e:
             logging.error(f"Graph Construction Failed: {e}")
             return
     elif args.mode == 'all':
-        logging.info(f">>> Stage 2/3: Skipping Graph Construction (Found existing: {adj_matrix_path}).")
+        logging.info(f">>> Stage 1/3: Skipping Graph Construction (Found existing: {adj_matrix_path}).")
+
+
+
+    # --- Stage 2: Data Preprocessing ---
+    # Logic: Run if mode is 'data' OR (mode is 'all' AND file doesn't exist)
+    should_run_data = (args.mode == 'data') or (args.mode == 'all' and not os.path.exists(dataset_path))
+
+    if should_run_data:
+        logging.info(">>> Stage 2/3: Data Preprocessing started...")
+        try:
+            process_and_save_data(args.data_dir, 'data/raw/stock_order.npy', dataset_path)
+            logging.info(">>> Stage 2/3: Data Preprocessing completed successfully.\n")
+        except Exception as e:
+            logging.error(f"Data Preprocessing Failed: {e}")
+            return
+    elif args.mode == 'all':
+        logging.info(f">>> Stage 2/3: Skipping Preprocessing (Found existing: {dataset_path}).")
 
     # --- Stage 3: Model Training ---
     if args.mode in ['train', 'all']:

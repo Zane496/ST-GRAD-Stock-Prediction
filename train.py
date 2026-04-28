@@ -56,7 +56,7 @@ def evaluate(model, data_loader, criterion, A):
         'loss': total_loss / len(data_loader),
         'accuracy': accuracy_score(all_labels, all_preds),
         'precision': precision_score(all_labels, all_preds, zero_division=0),
-        'recall': recall_score(all_labels, all_labels, zero_division=0),
+        'recall': recall_score(all_labels, all_preds, zero_division=0),
         'f1': f1_score(all_labels, all_preds, zero_division=0),
         'auc': roc_auc_score(all_labels, all_probs) if len(np.unique(all_labels)) > 1 else 0.5
     }
@@ -77,6 +77,7 @@ def train_model(args):
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=10)
 
     best_val_f1 = 0.0
+    best_metrics = None  # 用于保存最佳轮次的完整指标
     os.makedirs(args.save_dir, exist_ok=True)
     best_path = os.path.join(args.save_dir, "st_grad_best_model.pth")
 
@@ -92,14 +93,30 @@ def train_model(args):
 
         val_metrics = evaluate(model, val_loader, criterion, A)
         scheduler.step(val_metrics['f1'])
+
+        # 当 F1 提高时，更新并保存当前的完整指标
         if val_metrics['f1'] > best_val_f1:
             best_val_f1 = val_metrics['f1']
+            best_metrics = val_metrics  # 记录当前全套指标
             torch.save(model.state_dict(), best_path)
 
         if (epoch + 1) % 10 == 0:
             print(f"Epoch {epoch + 1:03d} | Val F1: {val_metrics['f1']:.4f} | Val AUC: {val_metrics['auc']:.4f}")
 
-    print(f"Training Done. Best F1: {best_val_f1:.4f}")
+    # --- 打印最终结果字典 ---
+    if best_metrics:
+        # 将单次运行结果适配到你的模板格式中
+        print("\n" + "=" * 35)
+        print("  FINAL PERFORMANCE METRICS (BEST)")
+        print("=" * 35)
+        print(f"  ACC    : {best_metrics['accuracy']:.4f}")
+        print(f"  PRE    : {best_metrics['precision']:.4f}")
+        print(f"  REC    : {best_metrics['recall']:.4f}")
+        print(f"  F1     : {best_metrics['f1']:.4f}")
+        print(f"  AUC    : {best_metrics['auc']:.4f}")
+        print("=" * 35)
+
+    print(f"Training Done. Best F1 saved at: {best_path}")
 
 
 def test_model(args):

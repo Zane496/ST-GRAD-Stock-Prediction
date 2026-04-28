@@ -54,20 +54,20 @@ python main.py --mode all
 
 Alternatively, you can execute the pipeline step-by-step to inspect intermediate outputs:
 
-### Step 1: Data Preprocessing
-
-Generates dynamic trading labels based on market volatility and extracts 24 technical indicators (including MACD, RSI, ATR, Bollinger Bands). The output is saved as `data/processed/stock_dataset.npz`.
-
-```python
-python main.py --mode data --data_dir data/raw
-```
-
-### Step 2: Graph Construction
+### Step 1: Graph Construction
 
 Builds and symmetrically normalizes the adjacency matrix based on the trend clustering results. The output is saved as `data/processed/normalized_adj_matrix.npy`.
 
 ```python
 python main.py --mode graph
+```
+
+### Step 2: Data Preprocessing
+
+Generates dynamic trading labels based on market volatility and extracts 24 technical indicators (including MACD, RSI, ATR, Bollinger Bands). The output is saved as `data/processed/stock_dataset.npz`.
+
+```python
+python main.py --mode data --data_dir data/raw
 ```
 
 ### Step 3: Model Training
