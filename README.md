@@ -18,7 +18,7 @@ ST-GRAD-Stock-Prediction/
 │   ├── raw/                        # Raw stock CSV files 
 │   ├── processed/                  # Generated .npz datasets and adjacency matrices
 │   └── new_cluster_results.csv     # Pre-computed trend clustering results
-├── img				    # Experimental results and model architecture diagrams
+├── img				    			# Experimental results and model architecture diagrams
 ├── models/
 │   ├── saved/                      # Directory for saving trained model weights
 │   ├── __init__.py

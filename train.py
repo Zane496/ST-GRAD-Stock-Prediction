@@ -77,7 +77,7 @@ def train_model(args):
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=10)
 
     best_val_f1 = 0.0
-    best_metrics = None  # 用于保存最佳轮次的完整指标
+    best_metrics = None
     os.makedirs(args.save_dir, exist_ok=True)
     best_path = os.path.join(args.save_dir, "st_grad_best_model.pth")
 
@@ -94,18 +94,16 @@ def train_model(args):
         val_metrics = evaluate(model, val_loader, criterion, A)
         scheduler.step(val_metrics['f1'])
 
-        # 当 F1 提高时，更新并保存当前的完整指标
         if val_metrics['f1'] > best_val_f1:
             best_val_f1 = val_metrics['f1']
-            best_metrics = val_metrics  # 记录当前全套指标
+            best_metrics = val_metrics
             torch.save(model.state_dict(), best_path)
 
         if (epoch + 1) % 10 == 0:
             print(f"Epoch {epoch + 1:03d} | Val F1: {val_metrics['f1']:.4f} | Val AUC: {val_metrics['auc']:.4f}")
 
-    # --- 打印最终结果字典 ---
+
     if best_metrics:
-        # 将单次运行结果适配到你的模板格式中
         print("\n" + "=" * 35)
         print("  FINAL PERFORMANCE METRICS (BEST)")
         print("=" * 35)
@@ -139,5 +137,5 @@ def test_model(args):
 
     print("\n=== Model Performance ===")
     for k, v in metrics.items():
-        if k.lower() != 'loss':  # 过滤掉 loss
+        if k.lower() != 'loss':
             print(f"{k.capitalize():10}: {v:.4f}")
